@@ -1,12 +1,24 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
-const int CAPOCITY = 5;
+enum ERRORS
+{
+    SUCCESS         = 0,
+    STACK_UNDERFLOW = 10101,
+    STACK_OVERFLOW  = 10201,
+    ALLOC_ERROR     = 10301,
+    REALLOC_ERROR   = 10401
+};
+
+const int START_STACK_SIZE = 2;
+const int COEFFICIENT = 2;
 
 struct Stack
 {
-    int data[CAPOCITY];
+    int *data;
+    size_t capocity;
     size_t size;
 };
 
@@ -15,27 +27,36 @@ int stackPush (Stack* stack, int value);
 int stackPop (Stack* stack, int* x);
 int stackDtor (Stack* stack);
 void printStack(Stack* stack);
+int reallocate (Stack* stack, size_t newSize);
 
 int main ()
 {
     struct Stack st;
     stackCtor (&st);
+    printStack (&st);
+    printf ("%d --- %d\n", st.size, st.capocity);
 
     stackPush (&st, 10);
-    stackPush (&st, 15);
-    stackPush (&st, 20);
-
     printStack (&st);
+    printf ("%d --- %d\n", st.size, st.capocity);
+
+    stackPush (&st, 15);
+    printStack (&st);
+    printf ("%d --- %d\n", st.size, st.capocity);
+
+    stackPush (&st, 20);
+    printStack (&st);
+    printf ("%d --- %d\n", st.size, st.capocity);
 
     int x = 0;
     stackPop (&st, &x);
     printf ("%d\n", x);
-
     printStack (&st);
+    printf ("%d --- %d\n", st.size, st.capocity);
 
-    stackDtor (&st);
+    //stackDtor (&st);
 
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -44,25 +65,32 @@ int stackCtor (Stack* stack)
 {
     assert (stack);
 
-    memset (stack->data, 0, sizeof (stack->data));
+    stack->capocity = START_STACK_SIZE;
     stack->size = 0;
 
-    return 0;
+    stack->data = (int*) calloc (stack->capocity, sizeof (int));
+    if (stack->data == NULL)
+    {
+        printf ("Can't alloc memory\n");
+        return ALLOC_ERROR;
+    }
+
+    return SUCCESS;
 }
 
 int stackPush (Stack* stack, int value)
 {
     assert (stack);
 
-    if (stack->size > CAPOCITY)
+    if (stack->size >= stack->capocity)
     {
-        printf ("Out of memory\n");
-        return 1;
+        reallocate (stack, stack->capocity * COEFFICIENT);
     }
 
-    stack->data[stack->size++] = value;
+    *(stack->data + stack->size * sizeof (int)) = value;
+    stack->size++;
 
-    return 0;
+    return SUCCESS;
 }
 
 int stackPop (Stack* stack, int* x)
@@ -71,23 +99,29 @@ int stackPop (Stack* stack, int* x)
 
     if (stack->size == 0)
     {
-        printf ("Underflow\n");
-        return 2;
+        printf ("Stack underflow\n");
+        return STACK_UNDERFLOW;
     }
 
     *x = --stack->size;
 
-    return 0;
+    if (stack->size <= stack->capocity/COEFFICIENT)
+    {
+        reallocate (stack, stack->capocity/COEFFICIENT);
+    }
+
+
+    return SUCCESS;
 }
 
 int stackDtor (Stack* stack)
 {
     assert (stack);
 
-    memset (stack->data, 0, sizeof (stack->data));
+    //free (stack->data);
     stack->size = -1;
 
-    return 0;
+    return SUCCESS;
 }
 
 void printStack (Stack* stack)
@@ -96,6 +130,21 @@ void printStack (Stack* stack)
 
     for (int num = 0; num < stack->size; num++)
     {
-        printf ("%d\n", stack->data[num]);
+        printf ("%d\n", *(stack->data + num * sizeof (int)));
     }
 }
+
+int reallocate (Stack* stack, size_t newSize)
+{
+    stack->capocity = newSize;
+    stack->data = (int*) realloc (stack->data, stack->capocity);
+    if (stack->data == NULL)
+        {
+            printf ("Can't realloc memory\n");
+            return ALLOC_ERROR;
+        }
+
+    return SUCCESS;
+}
+
+
