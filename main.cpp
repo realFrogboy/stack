@@ -1,6 +1,6 @@
 #include "stack.h"
 
-int main ()
+int main (int argc, char** argv)
 {
     int mode = 0;
     

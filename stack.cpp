@@ -10,9 +10,13 @@ int stackCtor (Stack* st)
     st->data = (int*) calloc (st->capocity, sizeof (int));
     if (st->data == NULL)
     {
-        printf ("%s:%d %s\n", __FILE__, __LINE__, "Can't alloc memory.\n");
+        LOG_INFO(ALLOC_ERROR);
         return ALLOC_ERROR;
     }
+
+    memset (st->data, POISON, st->capocity);
+
+    ASSERT_OK(st);
 
     return SUCCESS;
 }
@@ -23,12 +27,7 @@ int stackCtor (Stack* st)
 
 int stackPush (Stack* st, int value)
 {
-    int error = stackOK (st);
-    if (error != 0)
-    {
-        stackDump (__FILE__, __LINE__, error);
-        return error;
-    }
+    ASSERT_OK(st);
 
     if (st->Size >= st->capocity)
     {
@@ -37,6 +36,8 @@ int stackPush (Stack* st, int value)
 
     st->Size++;
     *(st->data + st->Size * sizeof (int)) = value;
+
+    ASSERT_OK(st);
 
     return SUCCESS;
 }
@@ -47,12 +48,7 @@ int stackPush (Stack* st, int value)
 
 int stackPop (Stack* st, int* x)
 {
-    int error = stackOK (st);
-    if (error != 0)
-    {
-        stackDump (__FILE__, __LINE__, error);
-        return error;
-    }
+    ASSERT_OK(st);
 
     *x = --st->Size;
 
@@ -61,6 +57,7 @@ int stackPop (Stack* st, int* x)
         reallocate (st, st->capocity/COEFFICIENT);
     }
 
+    ASSERT_OK(st);
 
     return SUCCESS;
 }
@@ -71,12 +68,7 @@ int stackPop (Stack* st, int* x)
 
 int stackDtor (Stack* st)
 {
-    int error = stackOK (st);
-    if (error != 0)
-    {
-        stackDump (__FILE__, __LINE__, error);
-        return error;
-    } 
+    ASSERT_OK(st);
 
     free (st->data);
     st->Size = 0;
@@ -90,17 +82,14 @@ int stackDtor (Stack* st)
 
 int printStack (Stack* st)
 {
-    int error = stackOK (st);
-    if (error != 0)
-    {
-        stackDump (__FILE__, __LINE__, error);
-        return error;
-    }
+    ASSERT_OK(st);
 
     for (unsigned num = st->Size; num >= 1; num--)
     {
         printf ("%d\n", *(st->data + num * sizeof (int)));
     }
+
+    ASSERT_OK(st);
 
     return 0;
 }
@@ -111,20 +100,19 @@ int printStack (Stack* st)
 
 int reallocate (Stack* st, size_t newSize)
 {
-    int error = stackOK (st);
-    if (error != 0)
-    {
-        stackDump (__FILE__, __LINE__, error);
-        return error;
-    }
+    ASSERT_OK(st);
 
     st->capocity = newSize;
     st->data = (int*) realloc (st->data, st->capocity);
     if (st->data == NULL)
         {
-            printf ("%s:%d %s\n", __FILE__, __LINE__, "Can't realloc memory.\n");
+            LOG_INFO(ALLOC_ERROR);
             return ALLOC_ERROR;
         }
+    
+    memset ((st->data + (st->Size + 1) * sizeof (int)), POISON,  st->capocity - st->Size);
+
+    ASSERT_OK(st);
 
     return SUCCESS;
 }
@@ -206,6 +194,9 @@ int RunUnitTest ()
 }
 
 
+//-----------------------------------------------------------------------------
+
+
 int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues, int numOfDeleted, int sumAfterDelete, int numAfterDelete)
 {
     int error = 0;
@@ -236,7 +227,7 @@ int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues,
     error = stackDtor (&st);
     if (error != 0) return error;
 
-    if ((sumOfValues != summBeforeDelete)||(sumAfterDelete != summAfterDelete)||(numAfterDelete != remainingNum))
+    if ((sumOfValues != summBeforeDelete) || (sumAfterDelete != summAfterDelete) || (numAfterDelete != remainingNum))
     {
         printf ("Test #%d --- ERROR\n"
                 "Expexted values: sumOfValues = %3d, sumAfterDelete = %3d, numAfterDelete = %3d\n"
@@ -253,6 +244,10 @@ int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues,
     return SUCCESS;
 }
 
+
+//-----------------------------------------------------------------------------
+
+
 int summ (const Stack* st)
 {
     int res = 0;
@@ -262,6 +257,9 @@ int summ (const Stack* st)
     
     return res;
 }
+
+
+//-----------------------------------------------------------------------------
 
 
 void cleanBuffer ()
