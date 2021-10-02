@@ -3,12 +3,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-//#define log_info (...) \
-        fprintf(fd,"%s:%d %s\n", file, line);
+
 
 enum ERRORS
 {
     SUCCESS            = 0,
+    FAIL               = 1,
     STACK_UNDERFLOW    = 10101,
     STACK_OVERFLOW     = 10201,
     ALLOC_ERROR        = 10301,
@@ -19,6 +19,8 @@ enum ERRORS
 
 const int START_STACK_SIZE = 2;
 const int COEFFICIENT = 2;
+const int NUM_OF_TESTS = 8;
+const int MAX_NUM_OF_VALUES = 10;
 
 struct Stack
 {
@@ -37,4 +39,7 @@ int stackOK (const Stack* st);
 void stackDump (const char* name, int line, int error);
 void logInfo (FILE* ptrfile, const char* file, int line, const char* errorCode);
 void cleanBuffer ();
+int RunUnitTest ();
+int summ (const Stack* st);
+int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues, int numOfDeleted, int sumAfterDelete, int numAfterDelete);
 

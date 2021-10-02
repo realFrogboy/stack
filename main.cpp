@@ -2,16 +2,32 @@
 
 int main ()
 {
+    int mode = 0;
+    
+    printf ("Run Tests? Press 0 or 1.\n");
+    while (((scanf ("%d", &mode)) != 1) || (mode < 0) || (mode > 1))
+    {
+        printf ("Incorrect input!\n"
+                "Please, enter 0 or 1.\n");
+        cleanBuffer ();
+    }
+
+    if (mode)
+    {
+        int numOfSuccess = RunUnitTest ();
+        printf ("Number of successful tests: %d / %d\n", numOfSuccess, NUM_OF_TESTS);
+        return SUCCESS;
+    }
+
     int error = 0, numT = 0;
 
     printf ("Enter number of numbers\n");
-    if ((scanf ("%d", &numT)) != 1)
+    while (((scanf ("%d", &numT)) != 1) || (numT < 0))
     {
-        printf ("Incorrect input.\n");
-        return INCORRECT_INPUT;
+        printf ("Incorrect input!\n"
+                "Number of numbers should be a number greater then 0.\n");
+        cleanBuffer ();
     }
-
-    cleanBuffer();
 
 
     struct Stack st ;
@@ -21,15 +37,16 @@ int main ()
     printStack (&st);
     printf ("%ld --- %ld\n", st.Size, st.capocity);
 
-    for (int num = 1; num < numT; num++)
+    for (int num = 0; num < numT; num++)
     {
         int val = 0;
 
         printf ("Enter value.\n");
-        if ((scanf ("%d", &val)) != 1)
+        while ((scanf ("%d", &val)) != 1)
         {
-            printf ("Incorrect input.\n");
-            return INCORRECT_INPUT;
+            printf ("Incorrect input!\n"
+                    "Please, enter a number.\n");
+            cleanBuffer ();
         }
 
 
@@ -43,13 +60,12 @@ int main ()
     int numDel = 0, remainingNum = 0;
 
     printf ("Enter number of delete.\n");
-    if ((scanf ("%d", &numDel)) != 1)
+    while ((scanf ("%d", &numDel)) != 1)
     {
-        printf ("Incorrect input.\n");
-        return INCORRECT_INPUT;
+        printf ("Incorrect input!\n"
+                "Please, enter a number.\n");
+        cleanBuffer ();
     }
-
-    printf ("\n\n%d\n\n\n", numDel);
 
 
     int num = 0;
@@ -69,7 +85,6 @@ int main ()
 
     printStack (&st);
     printf ("%ld --- %ld\n", st.Size, st.capocity);
-
 
     return SUCCESS;
 }
