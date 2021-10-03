@@ -19,10 +19,10 @@ int main (int argc, char** argv)
         return SUCCESS;
     }
 
-    int error = 0, numT = 0;
+    int error = 0, numOfNumbers = 0;
 
     printf ("Enter number of numbers\n");
-    while (((scanf ("%d", &numT)) != 1) || (numT < 0))
+    while (((scanf ("%d", &numOfNumbers)) != 1) || (numOfNumbers < 0))
     {
         printf ("Incorrect input!\n"
                 "Number of numbers should be a number greater then 0.\n");
@@ -30,40 +30,31 @@ int main (int argc, char** argv)
     }
 
 
-    struct Stack st ;
-    error = stackCtor (&st);
-    if (error != 0) return error;
-
-    printStack (&st);
-    printf ("%ld --- %ld\n", st.Size, st.capocity);
-
-    for (int num = 0; num < numT; num++)
+    struct Stack st;
+    if ((error = stackCtor (&st)) != 0) LOG_INFO(error);
+    PRINT_STACK(st);
+    
+    for (int num = 0; num < numOfNumbers; num++)
     {
         int val = 0;
 
         printf ("Enter value.\n");
         while ((scanf ("%d", &val)) != 1)
         {
-            printf ("Incorrect input!\n"
-                    "Please, enter a number.\n");
+            BAD_INPUT;
             cleanBuffer ();
         }
 
-
-        error = stackPush (&st, val);
-        if (error != 0) return error;
-
-        printStack (&st);
-        printf ("%ld --- %ld\n", st.Size, st.capocity);
+        if ((error = stackPush (&st, val)) != 0) LOG_INFO(error);
+        PRINT_STACK(st);
     }
 
-    int numDel = 0, remainingNum = 0;
+    int numDel = 0, remainingNum = numOfNumbers;
 
     printf ("Enter number of delete.\n");
     while ((scanf ("%d", &numDel)) != 1)
     {
-        printf ("Incorrect input!\n"
-                "Please, enter a number.\n");
+        BAD_INPUT;
         cleanBuffer ();
     }
 
@@ -71,20 +62,14 @@ int main (int argc, char** argv)
     int num = 0;
     while (num < numDel)
     {
-        error = stackPop (&st, &remainingNum);
-        if (error != 0) return error;
+        if ((error = stackPop (&st, &remainingNum)) != 0) LOG_INFO(error);
         num++;
 
-        printStack (&st);
-        printf ("%ld --- %ld\n", st.Size, st.capocity);
+        PRINT_STACK(st);
     }
 
-
-    error = stackDtor (&st);
-    if (error != 0) return error;
-
-    printStack (&st);
-    printf ("%ld --- %ld\n", st.Size, st.capocity);
+    if ((error = stackDtor (&st)) != 0) LOG_INFO(error);
+    PRINT_STACK(st);
 
     return SUCCESS;
 }
