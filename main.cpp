@@ -1,21 +1,19 @@
 #include "stack.h"
 
+
 int main (int argc, char** argv)
 {
     int mode = 0;
     
     printf ("Run Tests? Press 0 or 1.\n");
-    while (((scanf ("%d", &mode)) != 1) || (mode < 0) || (mode > 1))
-    {
-        printf ("Incorrect input!\n"
-                "Please, enter 0 or 1.\n");
-        cleanBuffer ();
-    }
+    while (((scanf ("%d", &mode)) != 1) || (mode < 0) || (mode > 1)) 
+        ERROR_MESSAGE("Please, enter 0 or 1.\n");
 
     if (mode)
     {
         int numOfSuccess = RunUnitTest ();
         printf ("Number of successful tests: %d / %d\n", numOfSuccess, NUM_OF_TESTS);
+
         return SUCCESS;
     }
 
@@ -23,11 +21,7 @@ int main (int argc, char** argv)
 
     printf ("Enter number of numbers\n");
     while (((scanf ("%d", &numOfNumbers)) != 1) || (numOfNumbers < 0))
-    {
-        printf ("Incorrect input!\n"
-                "Number of numbers should be a number greater then 0.\n");
-        cleanBuffer ();
-    }
+        ERROR_MESSAGE("Number of numbers should be a number greater then 0.\n");
 
 
     struct Stack st;
@@ -38,29 +32,18 @@ int main (int argc, char** argv)
     {
         int val = 0;
 
-        printf ("Enter value.\n");
-        while ((scanf ("%d", &val)) != 1)
-        {
-            BAD_INPUT;
-            cleanBuffer ();
-        }
+        GET_VALUE("Enter value.\n", val);
 
         if ((error = stackPush (&st, val)) != 0) LOG_INFO(error);
         PRINT_STACK(st);
     }
 
-    int numDel = 0, remainingNum = numOfNumbers;
+    int numForDelet = 0, remainingNum = numOfNumbers;
 
-    printf ("Enter number of delete.\n");
-    while ((scanf ("%d", &numDel)) != 1)
-    {
-        BAD_INPUT;
-        cleanBuffer ();
-    }
-
+    GET_VALUE("Enter number of delete.\n", numForDelet);
 
     int num = 0;
-    while (num < numDel)
+    while (num < numForDelet)
     {
         if ((error = stackPop (&st, &remainingNum)) != 0) LOG_INFO(error);
         num++;
