@@ -52,7 +52,11 @@ int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues,
         if ((error = stackPop (&st, &remainingNum)) != 0) LOG_INFO(error);
     }
 
+    //if (((int*) &st)[-1] != CANARY) printf ("hsfvbdh\n");
+
     int summAfterDelete = summ (&st);
+
+    //if (((int*) &st)[-1] != CANARY) printf ("hsfvbdh\n");
 
     if ((error = stackDtor (&st)) != 0) LOG_INFO(error);
 
@@ -78,11 +82,15 @@ int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues,
 
 
 int summ (const Stack* st)
-{
+{   
+    //ASSERT_OK(st);
+
     int res = 0;
 
     for (int num = 1; num <= st->Size; num++)
         res += *(st->data + num * sizeof(int));
+
+    //ASSERT_OK(st);
     
     return res;
 }
