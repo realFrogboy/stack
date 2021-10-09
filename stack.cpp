@@ -1,26 +1,36 @@
 #include "stack.h"
 
+size_t hash_value = 0;
+extern int DEBUG_LEVEL;
+
 int stackCtor (Stack* st)
 {
-    assert (st);
+    if (st == 0)
+    {
+        LOG_INFO;
+        stackDump (VOID_STACK);
+    }
 
-    st->capocity = START_STACK_SIZE;
-    st->Size = 0;
+    st->capacity = START_STACK_SIZE; st->Size = 0;
 
-    st->data = (int*) calloc (st->capocity + 1, sizeof (int));
-    if (st->data == NULL) LOG_INFO(ALLOC_ERROR);
+    st->data = (int*) calloc (st->capacity + 1, sizeof (int));
+    if (st->data == NULL) 
+    {    
+        LOG_INFO;
+        stackDump (ALLOC_ERROR);
+    }
 
-    ((int*) st)[-1] = CANARY;
-    //((char*) st)[sizeof (st->data) + sizeof (st->capocity) + sizeof (st->Size)] = CANARY;
 
-    memset (st->data, POISON, st->capocity);
+    st->leftCanary  = CANARY; st->rightCanary            = CANARY;
+    st->data[0]     = CANARY; st->data[st->capacity + 1] = CANARY;
 
-    st->data[0] = CANARY;
-    SET_CANARY;
+    hash_value = intHash (st->data);
 
-    ASSERT_OK(st);
 
-    return SUCCESS;
+    int error = 0;
+    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
+
+    return NO_ERRORS;
 }
 
 
@@ -29,35 +39,43 @@ int stackCtor (Stack* st)
 
 int stackPush (Stack* st, int value)
 {
-    ASSERT_OK(st);
+    int error = 0;   
+    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
-    if (st->Size >= st->capocity)
-        reallocate (st, st->capocity * COEFFICIENT);
+    if (st->Size >= st->capacity)
+        reallocate (st, st->capacity * RESIZE_COEFFICIENT);
 
     st->Size++;
-    *(st->data + st->Size * sizeof (int)) = value;
+    *(st->data + st->Size) = value;
 
-    ASSERT_OK(st);
+    hash_value = intHash (st->data);
 
-    return SUCCESS;
+    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
+
+    return NO_ERRORS;
 }
 
 
 //-----------------------------------------------------------------------------
 
 
-int stackPop (Stack* st, int* x)
+int stackPop (Stack* st)
 {
-    ASSERT_OK(st);
+    int error = 0;
+    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
-    *x = --st->Size;
+    if (st->Size <= st->capacity/RESIZE_COEFFICIENT)
+        reallocate (st, st->capacity/RESIZE_COEFFICIENT);
+    
+    st->data[st->Size] = POISON;
+    
+    --st->Size;
 
-    if (st->Size < st->capocity/COEFFICIENT)
-        reallocate (st, st->capocity/COEFFICIENT);
+    hash_value = intHash (st->data);
 
-    ASSERT_OK(st);
+    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
-    return SUCCESS;
+    return NO_ERRORS;
 }
 
 
@@ -66,30 +84,36 @@ int stackPop (Stack* st, int* x)
 
 int stackDtor (Stack* st)
 {
-    //ASSERT_OK(st);
+    int error = 0;   
+    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
     free (st->data);
     st->Size = -1;
 
-    return SUCCESS;
+    return NO_ERRORS;
 }
 
 
 //-----------------------------------------------------------------------------
 
 
-int printStack (Stack* st)
+int printStack (const Stack* st)
 {
-    ASSERT_OK(st);
+    int error = 0;
+    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
     for (unsigned num = st->Size; num >= 1; num--)
     {
-        printf ("%d\n", *(st->data + num * sizeof (int)));
+        printf ("%d\n", *(st->data + num));
     }
 
-    ASSERT_OK(st);
+    printf ("%ld --- %ld\n", st->Size, st->capacity);
 
-    return 0;
+    hash_value = intHash (st->data);
+
+    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
+
+    return NO_ERRORS;
 }
 
 
@@ -98,19 +122,26 @@ int printStack (Stack* st)
 
 int reallocate (Stack* st, size_t newSize)
 {
-    ASSERT_OK(st);
+    int error = 0;
+    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
-    st->capocity = newSize;
-    st->data = (int*) realloc (st->data, st->capocity + 1);
-    if (st->data == NULL) LOG_INFO(REALLOC_ERROR);
+    st->capacity = newSize;
+
+    st->data = (int*) realloc (st->data, (st->capacity + 1) * sizeof (int));
+    if (st->data == NULL) 
+    {
+        LOG_INFO;
+        stackDump (REALLOC_ERROR);
+    }
     
-    memset ((st->data + (st->Size + 1) * sizeof (int)), POISON,  st->capocity - st->Size);
 
-    SET_CANARY;
+    st->data[st->capacity + 1] = CANARY;
 
-    ASSERT_OK(st);
+    hash_value = intHash (st->data);
 
-    return SUCCESS;
+    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
+
+    return NO_ERRORS;
 }
 
 
@@ -156,6 +187,18 @@ void stackDump (int error)
         case STACK_CANARY_RIGHT_ERROR:
             printf ("\t\tERROR CODE: Stack's right canary was changed\n");
             break;
+        
+        case DATA_HASH_ERROR:
+            printf ("\t\tERROR CODE: Data's hash changed\n");
+            break;
+
+        case POISON_ERROR:
+            printf ("\t\tERROR CODE: Poision number changed\n");
+            break;
+        
+        case MEMSET_ERROR:
+            printf ("\t\tERROR CODE: Can't memset memory\n");
+            break;
 
     }
 }
@@ -170,3 +213,79 @@ void cleanBuffer ()
 }
 
 
+//-----------------------------------------------------------------------------
+
+
+int stackOK (const Stack* st)
+{
+    if ((DEBUG_LEVEL == 1) || (DEBUG_LEVEL == 2) || (DEBUG_LEVEL == 3))
+    {
+        if (!st) return VOID_STACK;                                               
+        if (st->Size < 0) return STACK_UNDERFLOW;                                 
+        if (st->capacity < st->Size) return STACK_OVERFLOW;
+    }
+
+    if ((DEBUG_LEVEL == 2) || (DEBUG_LEVEL == 3))
+    {
+        if (st->data[0] != CANARY) return DATA_CANARY_LEFT_ERROR;                 
+        if (st->data[st->capacity + 1] != CANARY) return DATA_CANARY_RIGHT_ERROR; 
+        if (st->leftCanary != CANARY) return STACK_CANARY_LEFT_ERROR;             
+        if (st->rightCanary != CANARY) return STACK_CANARY_RIGHT_ERROR;
+        //for (int num = st->Size + 1; num < st->capacity - 1; num++)
+         //   if (st->data[num] != POISON) return POISON_ERROR;
+    }
+
+    if (DEBUG_LEVEL == 3)
+        if (intHash (st->data) != hash_value) return DATA_HASH_ERROR;
+
+    return NO_ERRORS;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+int CHECK_ERRORS (const Stack* st)
+{
+    int error = 0;
+    if ((error = stackOK(st)) != 0)
+    {
+        stackDump (error);
+        return error;
+    }
+
+    return NO_ERRORS;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+size_t intHash (int const *input)
+{
+    const int ret_size = 32;
+    size_t ret = 0x555555;
+    const int per_char = 7;
+
+    while (*input)
+    {
+        ret ^=*input++;
+        ret = ((ret << per_char) | (ret >> (ret_size -per_char)));
+    }
+
+    return ret;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+void getValue (const char *str, int *val)
+{
+    printf (str); 
+    while ((scanf ("%d", val)) != 1) 
+    { 
+        printf ("Incorrect input!\nPlease, enter a number.\n"); 
+        cleanBuffer (); 
+    } 
+}

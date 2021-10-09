@@ -1,5 +1,11 @@
 #include "stack.h"
 
+const int MAX_NUM_OF_VALUES  = 10;
+
+int summ (const Stack* st);
+int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues, int numOfDeleted, 
+              int sumAfterDelete, int numAfterDelete);
+
 int RunUnitTest ()
 {
     int numOfSuccessful = 0;
@@ -37,44 +43,43 @@ int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues,
     int error = 0;
     static int numTest = 0;
 
-    struct Stack st ;
-    if ((error = stackCtor (&st)) != 0) LOG_INFO(error);
+    struct Stack st;
+    if ((error = stackCtor (&st)) != 0) LOG_INFO;
 
     for (int num = 0; num < numOfValues; num++)
-        if ((error = stackPush (&st, values[numTest][num])) != 0) LOG_INFO(error);
+        if ((error = stackPush (&st, values[numTest][num])) != 0) LOG_INFO;
 
     int summBeforeDelete = summ (&st);
-
-    int remainingNum = numOfValues;
+    
 
     for (int num = 0; num < numOfDeleted; num++)
     {
-        if ((error = stackPop (&st, &remainingNum)) != 0) LOG_INFO(error);
+        if ((error = stackPop (&st)) != 0) LOG_INFO;
     }
 
-    //if (((int*) &st)[-1] != CANARY) printf ("hsfvbdh\n");
+    long remainingNum = st.Size;
+
 
     int summAfterDelete = summ (&st);
 
-    //if (((int*) &st)[-1] != CANARY) printf ("hsfvbdh\n");
 
-    if ((error = stackDtor (&st)) != 0) LOG_INFO(error);
+    if ((error = stackDtor (&st)) != 0) LOG_INFO;
 
     if ((sumOfValues != summBeforeDelete) || (sumAfterDelete != summAfterDelete) || (numAfterDelete != remainingNum))
     {
         printf ("Test #%d --- ERROR\n"
-                "Expexted values: sumOfValues = %3d, sumAfterDelete = %3d, numAfterDelete = %3d\n"
-                "Results: ------------------- = %3d, -------------- = %3d, ---------------= %3d\n",
+                "Expected values: sumOfValues = %3d, sumAfterDelete = %3d, numAfterDelete = %3d\n"
+                "Results: ------------------- = %3d, -------------- = %3d, ---------------= %3ld\n",
                 (numTest+1), sumOfValues, sumAfterDelete, numAfterDelete, summBeforeDelete, summAfterDelete, remainingNum);
         
         numTest++;
 
-        return FAIL;
+        return TEST_FAILD ;
     }
 
     numTest++;
 
-    return SUCCESS;
+    return NO_ERRORS;
 }
 
 
@@ -83,14 +88,12 @@ int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues,
 
 int summ (const Stack* st)
 {   
-    //ASSERT_OK(st);
 
     int res = 0;
 
     for (int num = 1; num <= st->Size; num++)
-        res += *(st->data + num * sizeof(int));
+        res += *(st->data + num);
 
-    //ASSERT_OK(st);
     
     return res;
 }
