@@ -1,7 +1,10 @@
 #include "stack.h"
 
 const int MAX_NUM_OF_VALUES  = 10;
+const int NUM_OF_TESTS = 8;
+const int TEST_FAILD = 1;
 
+int RunUnitTest ();
 int summ (const Stack* st);
 int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues, int numOfDeleted, 
               int sumAfterDelete, int numAfterDelete);
@@ -40,7 +43,7 @@ int RunUnitTest ()
 
 int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues, int numOfDeleted, int sumAfterDelete, int numAfterDelete)
 {
-    int error = 0;
+    int error = 0; 
     static int numTest = 0;
 
     struct Stack st;

@@ -1,5 +1,9 @@
 #include "stack.h"
 
+void getValue (const char *str, int *val);
+int RunUnitTest ();
+void cleanBuffer ();
+
 int DEBUG_LEVEL = 0;
 
 int main (int argc, char** argv)
@@ -27,7 +31,7 @@ int main (int argc, char** argv)
     while (((scanf ("%d", &DEBUG_LEVEL)) != 1) || (DEBUG_LEVEL < 0) || (DEBUG_LEVEL > 3)) 
      { 
         printf ("Incorrect input!\n" 
-               "Please, enter 0, 1, 2 or 3.\n"); 
+               "Please, enter 0, 1, 2 or 3.\n");  
         cleanBuffer (); 
     }
     
@@ -42,7 +46,7 @@ int main (int argc, char** argv)
     if (mode)
     {
         int numOfSuccess = RunUnitTest ();
-        printf ("Number of successful tests: %d / %d\n", numOfSuccess, NUM_OF_TESTS);
+        printf ("Number of successful tests: %d.\n", numOfSuccess);
 
         return NO_ERRORS;
     }
@@ -88,4 +92,27 @@ int main (int argc, char** argv)
     if ((error = stackDtor (&st)) != 0) LOG_INFO(error);
 
     return NO_ERRORS;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+void getValue (const char *str, int *val)
+{
+    printf ("%s\n", str); 
+    while ((scanf ("%d", val)) != 1) 
+    { 
+        printf ("Incorrect input!\nPlease, enter a number.\n"); 
+        cleanBuffer (); 
+    } 
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+void cleanBuffer ()
+{
+    while (getchar() != '\n') continue;
 }
