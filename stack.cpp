@@ -20,7 +20,7 @@ enum ERRORS stackCtor (Stack* st)
         stackDump (ALLOC_ERROR);
     }
 
-    st->data = st->data + 1;
+    st->data++;
 
     st->leftCanary = CANARY; st->rightCanary = CANARY;
     PUT_CANARY;
@@ -87,7 +87,7 @@ enum ERRORS stackDtor (Stack* st)
     int error = 0;   
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
-    free (st->data - 1);
+    free (--st->data);
     st->Size = -1;
 
     return NO_ERRORS;
@@ -126,15 +126,20 @@ enum ERRORS reallocate (Stack* st, size_t newSize)
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
     st->capacity = newSize;
+    st->data--;
 
-    int *ptrBegin = st->data - 1;
-
-    ptrBegin = (int*) realloc (ptrBegin, (st->capacity + 3) * sizeof (int));
-    if (ptrBegin == NULL) 
+    int *tmp = (int*) realloc (st->data, (st->capacity + 4) * sizeof(int));
+    if (tmp != NULL)
+    {   
+        st->data = tmp;
+        st->data++;
+    }
+    else
     {
         LOG_INFO;
-        stackDump (REALLOC_ERROR);
+        stackDump (REALLOC_ERROR);    
     }
+
     
     PUT_CANARY;
 
