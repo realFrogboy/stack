@@ -1,34 +1,29 @@
 #include "stack.h"
+#include "hash.h"
 
-size_t hash_value = 0;
+const uint32_t SEED = 1; // for hash
+
 extern int DEBUG_LEVEL;
 
-enum ERRORS stackCtor (Stack* st)
+ERRORS stackCtor (Stack* st)
 {
-    if (st == 0)
-    {
-        LOG_INFO;
-        stackDump (VOID_STACK);
-    }
+    ERROR_INFO(st == 0, "ERROR: Void ptr on stack\n");
 
-    st->capacity = START_STACK_SIZE; st->Size = 0;
+    st->capacity = START_STACK_SIZE; 
+    st->Size = 0;
 
-    st->data = (int*) calloc (st->capacity + 4, sizeof (int));
-    if (st->data == NULL) 
-    {    
-        LOG_INFO;
-        stackDump (ALLOC_ERROR);
-    }
+    st->data = (double*) calloc (st->capacity + 2, sizeof (double));
+    ERROR_INFO(st->data == NULL, "ERROR: Can't alloc memory\n");
 
     st->data++;
 
-    st->leftCanary = CANARY; st->rightCanary = CANARY;
+    st->leftCanary = CANARY; 
+    st->rightCanary = CANARY;
     PUT_CANARY;
 
-    hash_value = intHash (st->data);
+    CALC_HASH;
 
-    int error = 0;
-    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
+    CHECK_STACK;
 
     return NO_ERRORS;
 }
@@ -37,20 +32,20 @@ enum ERRORS stackCtor (Stack* st)
 //-----------------------------------------------------------------------------
 
 
-enum ERRORS stackPush (Stack* st, int value)
+ERRORS stackPush (Stack* st, double value)
 {
-    int error = 0;   
-    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
+    CHECK_STACK;
 
     if (st->Size >= st->capacity)
         reallocate (st, st->capacity * RESIZE_COEFFICIENT);
 
-    st->Size++;
     *(st->data + st->Size) = value;
- 
-    hash_value = intHash (st->data);
+    
+    st->Size++;
 
-    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
+    CALC_HASH;
+
+    CHECK_STACK;
 
     return NO_ERRORS;
 }
@@ -59,21 +54,21 @@ enum ERRORS stackPush (Stack* st, int value)
 //-----------------------------------------------------------------------------
 
 
-enum ERRORS stackPop (Stack* st)
+ERRORS stackPop (Stack* st)
 {
-    int error = 0;
-    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
+    CHECK_STACK;
 
-    if (st->Size <= st->capacity/RESIZE_COEFFICIENT)
+    if ((st->Size <= st->capacity/RESIZE_COEFFICIENT) && (st->capacity != START_STACK_SIZE))
         reallocate (st, st->capacity/RESIZE_COEFFICIENT);
     
     st->data[st->Size] = POISON;
     
     --st->Size;
+    PUT_CANARY;
 
-    hash_value = intHash (st->data);
+    CALC_HASH;
 
-    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
+    CHECK_STACK;
 
     return NO_ERRORS;
 }
@@ -82,10 +77,9 @@ enum ERRORS stackPop (Stack* st)
 //-----------------------------------------------------------------------------
 
 
-enum ERRORS stackDtor (Stack* st)
+ERRORS stackDtor (Stack* st)
 {
-    int error = 0;   
-    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
+    CHECK_STACK;
 
     free (--st->data);
     st->Size = -1;
@@ -97,55 +91,27 @@ enum ERRORS stackDtor (Stack* st)
 //-----------------------------------------------------------------------------
 
 
-enum ERRORS printStack (const Stack* st)
+ERRORS reallocate (Stack* st, const size_t newSize) //static
 {
-    int error = 0;
-    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
-
-    for (unsigned num = st->Size; num >= 1; num--)
-    {
-        printf ("%d\n", *(st->data + num));
-    }
-
-    printf ("%ld --- %ld\n", st->Size, st->capacity);
-
-    hash_value = intHash (st->data);
-
-    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
-
-    return NO_ERRORS;
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-enum ERRORS reallocate (Stack* st, size_t newSize)
-{
-    int error = 0;
-    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
+    CHECK_STACK;
 
     st->capacity = newSize;
     st->data--;
 
-    int *tmp = (int*) realloc (st->data, (st->capacity + 4) * sizeof(int));
+    double *tmp = (double*) realloc (st->data, (st->capacity + 2) * sizeof(double));
     if (tmp != NULL)
     {   
         st->data = tmp;
         st->data++;
     }
     else
-    {
-        LOG_INFO;
-        stackDump (REALLOC_ERROR);    
-    }
+        ERROR_INFO(tmp == NULL, "ERROR: Can't realloc memory\n");
 
-    
     PUT_CANARY;
 
-    hash_value = intHash (st->data);
+    CALC_HASH;
 
-    if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
+    CHECK_STACK;
 
     return NO_ERRORS;
 }
@@ -197,6 +163,14 @@ void stackDump (int error)
         case DATA_HASH_ERROR:
             printf ("\t\tERROR CODE: Data's hash changed\n");
             break;
+        
+        case CAPACITY_HASH_ERROR:
+            printf ("\t\tERROR CODE: Capacity's hash changed\n");
+            break;
+        
+        case SIZE_HASH_ERROR:
+            printf ("\t\tERROR CODE: Size's hash changed\n");
+            break;
 
         case POISON_ERROR:
             printf ("\t\tERROR CODE: Poision number changed\n");
@@ -206,49 +180,33 @@ void stackDump (int error)
             printf ("\t\tERROR CODE: Can't memset memory\n");
             break;
 
-    }
+    } //to write
 }
 
 
 //-----------------------------------------------------------------------------
 
 
-enum ERRORS stackOK (const Stack* st)
+ERRORS stackOK (const Stack* st)
 {
     if ((DEBUG_LEVEL == 1) || (DEBUG_LEVEL == 2) || (DEBUG_LEVEL == 3))
     {
         if (!st) return VOID_STACK;                                               
-        if (st->Size < 0) return STACK_UNDERFLOW;                                 
         if (st->capacity < st->Size) return STACK_OVERFLOW;
     }
 
     if ((DEBUG_LEVEL == 2) || (DEBUG_LEVEL == 3))
     {
         if (*(canary_t*)(st->data - 1) != CANARY) return DATA_CANARY_LEFT_ERROR;                 
-        if (*(canary_t*)(st->data + st->capacity + 1) != CANARY) return DATA_CANARY_RIGHT_ERROR; 
+        if (*(canary_t*)(st->data + st->capacity) != CANARY) return DATA_CANARY_RIGHT_ERROR; 
         if (st->leftCanary != CANARY) return STACK_CANARY_LEFT_ERROR;             
         if (st->rightCanary != CANARY) return STACK_CANARY_RIGHT_ERROR;
-        //for (int num = st->Size + 1; num < st->capacity - 1; num++)
-         //   if (st->data[num] != POISON) return POISON_ERROR;
     }
 
-    if (DEBUG_LEVEL == 3)
-        if (intHash (st->data) != hash_value) return DATA_HASH_ERROR;
-
-    return NO_ERRORS;
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-int CHECK_ERRORS (const Stack* st)
-{
-    int error = 0;
-    if ((error = stackOK(st)) != 0)
-    {
-        stackDump (error);
-        return error;
+    if (DEBUG_LEVEL == 3) {
+        if (MurmurHash1 (st->data, sizeof(st->data), SEED) != st->data_hash) return DATA_HASH_ERROR;
+        if (st->capacity != st->capacity_hash) return CAPACITY_HASH_ERROR;
+        if (st->Size != st->size_hash) return SIZE_HASH_ERROR;
     }
 
     return NO_ERRORS;
@@ -258,17 +216,12 @@ int CHECK_ERRORS (const Stack* st)
 //-----------------------------------------------------------------------------
 
 
-size_t intHash (int const *input)
+void prinStack (const Stack* st)
 {
-    const int ret_size = 32;
-    size_t ret = 0x555555;
-    const int per_char = 7;
-
-    while (*input)
+    for (unsigned num = 0; num < st->Size; num++)
     {
-        ret ^=*input++;
-        ret = ((ret << per_char) | (ret >> (ret_size -per_char)));
+        printf ("%f\n", *(st->data + num));
     }
 
-    return ret;
+    printf ("%ld --- %ld\n", st->Size, st->capacity);
 }

@@ -3,11 +3,19 @@
 const int MAX_NUM_OF_VALUES  = 10;
 const int NUM_OF_TESTS = 8;
 const int TEST_FAILD = 1;
+int DEBUG_LEVEL = 3;
 
 int RunUnitTest ();
 int summ (const Stack* st);
 int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues, int numOfDeleted, 
               int sumAfterDelete, int numAfterDelete);
+
+int main() {
+    int numOfSuccess = RunUnitTest ();
+    printf ("Number of successful tests: %d.\n", numOfSuccess);
+
+    return 0;
+}
 
 int RunUnitTest ()
 {
@@ -42,22 +50,21 @@ int RunUnitTest ()
 
 
 int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues, int numOfDeleted, int sumAfterDelete, int numAfterDelete)
-{
-    int error = 0; 
+{ 
     static int numTest = 0;
 
     struct Stack st;
-    if ((error = stackCtor (&st)) != 0) LOG_INFO;
+    stackCtor (&st);
 
     for (int num = 0; num < numOfValues; num++)
-        if ((error = stackPush (&st, values[numTest][num])) != 0) LOG_INFO;
+        stackPush (&st, values[numTest][num]);
 
     int summBeforeDelete = summ (&st);
     
 
     for (int num = 0; num < numOfDeleted; num++)
     {
-        if ((error = stackPop (&st)) != 0) LOG_INFO;
+        stackPop (&st);
     }
 
     long remainingNum = st.Size;
@@ -66,7 +73,7 @@ int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues,
     int summAfterDelete = summ (&st);
 
 
-    if ((error = stackDtor (&st)) != 0) LOG_INFO;
+    stackDtor (&st);
 
     if ((sumOfValues != summBeforeDelete) || (sumAfterDelete != summAfterDelete) || (numAfterDelete != remainingNum))
     {
@@ -94,7 +101,7 @@ int summ (const Stack* st)
 
     int res = 0;
 
-    for (int num = 1; num <= st->Size; num++)
+    for (unsigned num = 0; num < st->Size; num++)
         res += *(st->data + num);
 
     
