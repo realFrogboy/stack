@@ -8,7 +8,7 @@ There are some unit tests.
 
 ## Build
         
-        cd Onegin
+        cd stack
         mkdir build
         cd build
         cmake ../
