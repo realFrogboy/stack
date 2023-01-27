@@ -63,8 +63,8 @@ int main (int argc, char** argv)
 
 
     struct Stack st;
-    if ((error = stackCtor (&st)) != 0) LOG_INFO(error);
-    printStack(&st);
+    if ((error = stackCtor (&st)) != 0)
+        printStack(&st);
     
     for (int num = 0; num < numOfNumbers; num++)
     {
@@ -72,8 +72,8 @@ int main (int argc, char** argv)
 
         getValue ("Enter a value\n", &val);
 
-        if ((error = stackPush (&st, val)) != 0) LOG_INFO(error);
-        printStack(&st);
+        if ((error = stackPush (&st, val)) != 0)
+            printStack(&st);
     }
 
     int numForDelet = 0, remainingNum = numOfNumbers;
@@ -83,13 +83,12 @@ int main (int argc, char** argv)
     int num = 0;
     while (num < numForDelet)
     {
-        if ((error = stackPop (&st)) != 0) LOG_INFO(error);
+        if ((error = stackPop (&st)) != 0)
+            printStack(&st);
         num++;
-
-        printStack(&st);
     }
 
-    if ((error = stackDtor (&st)) != 0) LOG_INFO(error);
+    error = stackDtor(&st);
 
     return NO_ERRORS;
 }

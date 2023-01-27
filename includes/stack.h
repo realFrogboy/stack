@@ -16,7 +16,7 @@
                     printf (" %s:%d, IN FUNCTION %s:\n.", __FILE__, __LINE__, __PRETTY_FUNCTION__);                                                                 \
                     printf ("Stack:\n");                                                                                                                            \
                     /*printf ("%ld\n", st->Size); */                                                                                                                \
-                    prinStack (st);                                                                                                                                 \
+                    printStack (st);                                                                                                                                 \
                     printf ("                 Left stack canary  Right stack canary  Left data canary  Right data canary  Data hash  Capacity hash  Stack hash\n"   \
                             "Expexted values: %lld               %lld                %lld              %lld               %u         %ld            %ld \n"         \
                             "Received values: %lld               %lld                %lld              %lld               %u         %ld            %ld \n",        \
@@ -103,7 +103,7 @@ ERRORS stackDtor (Stack* st);
 ERRORS reallocate (Stack* st, size_t newSize);
 
 void stackDump (int error);
-void prinStack (const Stack* st);
+void printStack (const Stack* st);
 ERRORS stackOK (const Stack* st);
 
 #endif

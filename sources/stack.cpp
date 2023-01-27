@@ -216,7 +216,7 @@ ERRORS stackOK (const Stack* st)
 //-----------------------------------------------------------------------------
 
 
-void prinStack (const Stack* st)
+void printStack (const Stack* st)
 {
     for (unsigned num = 0; num < st->Size; num++)
     {

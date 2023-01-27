@@ -3,19 +3,19 @@
 const int MAX_NUM_OF_VALUES  = 10;
 const int NUM_OF_TESTS = 8;
 const int TEST_FAILD = 1;
-int DEBUG_LEVEL = 3;
+//int DEBUG_LEVEL = 3;
 
 int RunUnitTest ();
 int summ (const Stack* st);
 int UnitTest (int values[][MAX_NUM_OF_VALUES], int numOfValues, int sumOfValues, int numOfDeleted, 
               int sumAfterDelete, int numAfterDelete);
 
-int main() {
+/*int main() {
     int numOfSuccess = RunUnitTest ();
     printf ("Number of successful tests: %d.\n", numOfSuccess);
 
     return 0;
-}
+}*/
 
 int RunUnitTest ()
 {
