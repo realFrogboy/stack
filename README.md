@@ -1,4 +1,4 @@
-# Onegin
+# Stack
 3rd task from Huawei course, 1st grade.<br />
 
 Stack in C language. There are 3 debug levels with canary and hash protection.
